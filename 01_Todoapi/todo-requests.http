@@ -1,0 +1,23 @@
+GET http://localhost:8000/todos
+
+###
+GET http://localhost:8000/todos/1
+
+###
+POST http://localhost:8000/todos
+Content-Type: application/json
+
+{
+  "title": "Make me do something"
+}
+
+###
+DELETE http://localhost:8000/todos/1
+
+###
+PUT http://localhost:8000/todos/2
+Content-Type: application/json
+
+{
+  "title": "Updated todo"
+}
