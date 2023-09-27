@@ -2,268 +2,182 @@ package main
 
 import (
 	"fmt"
+	"image"
+	"io"
 	"math"
-	"strconv"
 	"strings"
+	"time"
 )
 
-var gI, gJ int = 1, 2
+type Vertex struct {
+	X, Y float64
+}
 
-const Pi = 3.14
+// Pointer receiver
+func (v *Vertex) Scale(f float64) {
+	v.X = v.X * f
+	v.Y = v.Y * f
+}
+
+func (v Vertex) Abs() float64 {
+	return math.Sqrt(v.X*v.X + v.Y*v.Y)
+}
+
+type Abser interface {
+	Abs() float64
+}
+
+func Abs(v Vertex) float64 {
+	return math.Sqrt(v.X*v.X + v.Y*v.Y)
+}
+
+//
+
+type MyFloat float64
+
+func (f MyFloat) Abs() float64 {
+	if f < 0 {
+		return float64(-f)
+	}
+	return float64(f)
+}
+
+// todo skipped https://go.dev/tour/methods/6
+// Methods and pointer indirection
+
+// Rule:
+// In general, all methods on a given type should have either value or pointer receivers,
+// but not a mixture of both.
 
 func main() {
-	//Types()
+	v := Vertex{3, 4}
+
+	v.Scale(10)
+
+	// method
+	fmt.Println(v.Abs())
+
+	// function
+	fmt.Println(Abs(v))
+
+	// method on non struct type
+	f := MyFloat(-math.Sqrt2)
+	fmt.Println(f.Abs())
+
+	var a Abser
+	a = f  // a MyFloat implements Abser
+	a = &v // a *Vertex implements Abser
+
+	// In the following line, v is a Vertex (not *Vertex)
+	// and does NOT implement Abser.
+	a = v
+
+	fmt.Println(a.Abs())
 	//
-	//Structures()
+	//// empty interface
+	//var i interface{}
+	//describe(i)
+
+	// type assertion
+	//TypeAssertions()
+
+	//TypeSwitch()
 	//
-	//Loops()
+	//p1 := Person{"Arthur Dent", 42}
+	//p2 := Person{"Zaphod Beeblebrox", 9001}
+	//fmt.Println(p1, p2)
 	//
-	//SomeFunc()
-	//
-	//println(SwitchedDay(2))
-	//
-	//DeferredFunc()
-	//
-	//Pointers()
-	//
-	//FuncAsValue()
+	//// Errors
+	//if err := runError(); err != nil {
+	//	fmt.Println(err)
+	//}
 
-	Closure()
+	//DoRead()
+
+	doImage()
 }
 
-func Pointers() {
-	i, j := 42, 2701
+func DoRead() {
+	r := strings.NewReader("Hello, Reader!")
 
-	p := &i         // point to i
-	fmt.Println(p)  // prints pointer (memory address)
-	fmt.Println(*p) // read i through the pointer
-	*p = 21         // set i through the pointer
-	fmt.Println(i)  // see the new value of i
-
-	p = &j         // point to j
-	*p = *p / 37   // divide j through the pointer
-	fmt.Println(j) // see the new value of j
-}
-
-func Loops() {
-	// loop
-	res1 := ""
-	for i := 0; i < 20; i++ {
-		res1 += strconv.Itoa(i)
-	}
-	fmt.Println(res1)
-
-	// omitted
-	sum := 1
-	for sum < 1000 {
-		sum += sum
-	}
-	fmt.Println(sum)
-}
-
-func Structures() {
-	// // Structures
-	// array
-	var arr [10]int // initialized with 0 by default
-
-	fmt.Println("arr: ", arr)
-	fmt.Println("len(arr): ", len(arr))
-	fmt.Printf("The type of arr is: %T\n", arr)
-
-	for i := 0; i < 10; i++ {
-		arr[i] = i
-	}
-
-	// slice
-	var slice []int = []int{1, 4, 6, 8, 34, 54, 23, 12, 76, 23}
-	fmt.Println("slice: ", slice)
-	fmt.Println("len(slice): ", len(slice))
-	fmt.Printf("The type of slice is: %T\n", slice)
-
-	// slice through make
-	b := make([]int, 0, 5)
-	fmt.Println("b: ", b)
-
-	// Slice the slice to give it zero length.
-	slice = slice[:0]
-	printSlice(slice)
-
-	// Extend its length.
-	slice = slice[:4]
-	printSlice(slice)
-
-	// Drop its first two values.
-	slice = slice[2:]
-	printSlice(slice)
-
-	// Append
-	slice = append(slice, 10, 11, 12)
-	printSlice(slice)
-
-	// loop over slice = range
-	for i, v := range slice {
-		fmt.Printf("2**%d = %d\n", i, v)
-	}
-
-	// map
-	mmap := make(map[string]int)
-	mmap["foo"] = 42
-	fmt.Printf("The type of map is: %T\n", mmap)
-	fmt.Println(mmap["foo"])
-
-	delete(mmap, "foo")
-	// not exists retuns default value (0)
-	fmt.Println(mmap["foo"])
-
-	// check existence
-	val, ok := mmap["foo"]
-	if ok {
-		fmt.Printf("The value of foo is: %d\n", val)
-	} else {
-		fmt.Println("foo not found")
-	}
-
-	type Person struct {
-		FirstName string
-		LastName  string
-		Age       int
-	}
-
-	pavlo := Person{
-		FirstName: "Pavlo",
-		LastName:  "Holmes",
-		Age:       34,
-	}
-
-	fmt.Println(pavlo)
-
-	SliceOfSlices()
-}
-
-func SliceOfSlices() {
-	board := [][]string{
-		[]string{"_", "_", "_"},
-		[]string{"_", "_", "_"},
-		[]string{"_", "_", "_"},
-	}
-
-	// The players take turns.
-	board[0][0] = "X"
-	board[2][2] = "O"
-	board[1][2] = "X"
-	board[1][0] = "O"
-	board[0][2] = "X"
-
-	for i := 0; i < len(board); i++ {
-		fmt.Printf("%s\n", strings.Join(board[i], " "))
+	b := make([]byte, 8)
+	for {
+		n, err := r.Read(b)
+		fmt.Printf("n = %v err = %v b = %v\n", n, err, b)
+		fmt.Printf("b[:n] = %q\n", b[:n])
+		if err == io.EOF {
+			break
+		}
 	}
 }
 
-func printSlice(s []int) {
-	fmt.Printf("len=%d cap=%d %v\n", len(s), cap(s), s)
+func TypeSwitch() {
+	do(21)
+	do("hello")
+	do(true)
 }
 
-func Types() {
-	// multivar
-	var c, python, java = true, false, "no!"
-	fmt.Println(gI, gJ, c, python, java)
-
-	// // types
-	// numeric intX
-	intoShort := 127
-	fmt.Println("intoShort:", intoShort)
-	fmt.Printf("The type of intoShort is: %T\n", intoShort)
-
-	var into int8 = 127
-	fmt.Println("into:", into)
-
-	var uinto uint8 = 255
-	fmt.Println("uinto:", uinto)
-
-	var floato float32 = 3.14
-	fmt.Println("floato:", floato)
-
-	// complex numbers
-	var comp1 complex64 = complex(6, 2)
-	var comp2 complex64 = 13 + 33i
-	fmt.Println(comp1)
-	fmt.Println(comp2)
-
-	// Display the type
-	fmt.Printf("The type of a is %T and "+
-		"the type of b is %T\n", comp1, comp2)
-	compSum := comp1 + comp2
-	fmt.Println("Comp sum ", compSum)
-
-	// booleans
-	x := false
-	y := true
-	fmt.Println("x && y ", x && y)
-	fmt.Println("x || y ", x || y)
-
-	// strings
-	str := "Some a bit long, a bit not string"
-
-	fmt.Printf("Length of the string is:%d\n", len(str))
-	fmt.Printf("String is: %s\n", str)
-	fmt.Printf("Type of str is: %T\n", str)
-	fmt.Println("Repeated: ", strings.Repeat(str, 4))
-
-	var char = str[0]
-	fmt.Println("Char is: ", char)
-	fmt.Printf("Type of char is: %T\n", char)
-}
-
-func DeferredFunc() {
-	defer println("This is latest")
-
-	for i := 0; i < 10; i++ {
-		defer fmt.Println(i) // deferred order: 9 -> 0
-	}
-
-	println("This is first")
-}
-
-func SomeFunc() {
-	println("hello world from function")
-}
-
-func SwitchedDay(number int) string {
-	day := ""
-	switch number {
-	case 1:
-		day = "Monday"
-	case 2:
-		day = "Tuesday"
+func do(i interface{}) {
+	switch v := i.(type) {
+	case int:
+		fmt.Printf("Twice %v is %v\n", v, v*2)
+	case string:
+		fmt.Printf("%q is %v bytes long\n", v, len(v))
 	default:
-		day = "Other"
-	}
-
-	return day
-}
-
-func FuncAsValue() {
-	fmt.Println(compute(math.Pow))
-}
-
-func compute(fn func(float64, float64) float64) float64 {
-	return fn(3, 4)
-}
-
-func Closure() {
-	pos, neg := adder(), adder()
-	for i := 0; i < 10; i++ {
-		fmt.Println(
-			pos(i),
-			neg(-2*i),
-		)
+		fmt.Printf("I don't know about type %T!\n", v)
 	}
 }
 
-func adder() func(int) int {
-	sum := 0
-	return func(x int) int {
-		sum += x
-		return sum
+func TypeAssertions() {
+	var i interface{} = "hello"
+
+	s := i.(string)
+	fmt.Println(s)
+
+	s, ok := i.(string)
+	fmt.Println(s, ok)
+
+	f, ok := i.(float64)
+	fmt.Println(f, ok)
+
+	f = i.(float64) // panic
+	fmt.Println(f)
+}
+
+func describe(i interface{}) {
+	fmt.Printf("(%v, %T)\n", i, i)
+}
+
+type Person struct {
+	Name string
+	Age  int
+}
+
+// ToString'er :)
+func (p Person) String() string {
+	return fmt.Sprintf("%v (%v years)", p.Name, p.Age)
+}
+
+// Errors
+type MyError struct {
+	When time.Time
+	What string
+}
+
+func (e *MyError) Error() string {
+	return fmt.Sprintf("at %v, %s",
+		e.When, e.What)
+}
+
+func runError() error {
+	return &MyError{
+		time.Now(),
+		"it didn't work",
 	}
+}
+
+func doImage() {
+	m := image.NewRGBA(image.Rect(0, 0, 100, 100))
+	fmt.Println(m.Bounds())
+	fmt.Println(m.At(0, 0).RGBA())
 }
